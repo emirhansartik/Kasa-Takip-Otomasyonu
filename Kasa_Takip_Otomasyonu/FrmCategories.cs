@@ -149,15 +149,7 @@ namespace Kasa_Takip_Otomasyonu
             }
         }
 
-        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                txtCategoriesId.Text = dataGridView1.Rows[e.RowIndex].Cells[0].Value?.ToString();
-                txtCategoriesName.Text = dataGridView1.Rows[e.RowIndex].Cells[1].Value?.ToString();
-            }
-        }
-
+   
         private void frmDashboardForm_Click_1(object sender, EventArgs e)
         {
             FrmDashboard frm = new FrmDashboard();
