@@ -1,0 +1,88 @@
+﻿CREATE DATABASE KasaTakipDb;
+GO
+
+USE KasaTakipDb;
+GO
+
+-- 1. Kullanıcılar Tablosu (Giriş Ekranı İçin)
+CREATE TABLE Kullanicilar (
+    KullaniciId INT IDENTITY(1,1) PRIMARY KEY,
+    AdSoyad NVARCHAR(100) NOT NULL,
+    KullaniciAdi NVARCHAR(50) NOT NULL UNIQUE,
+    Sifre NVARCHAR(50) NOT NULL
+);
+
+-- 2. Kategoriler Tablosu
+CREATE TABLE Kategoriler (
+    KategoriId INT IDENTITY(1,1) PRIMARY KEY,
+    KategoriAd NVARCHAR(100) NOT NULL
+);
+
+-- 3. Kasalar Tablosu (Nakit, Banka vb.)
+CREATE TABLE Kasalar (
+    KasaId INT IDENTITY(1,1) PRIMARY KEY,
+    KasaAd NVARCHAR(100) NOT NULL,
+    KasaTuru NVARCHAR(50) NOT NULL, -- Nakit, Banka, Kredi Kartı
+    Bakiye DECIMAL(18,2) NOT NULL DEFAULT 0
+);
+
+-- 4. Gelir ve Giderler Tablosu (Birleştirilmiş Temiz Yapı)
+CREATE TABLE GelirGiderler (
+    IslemId INT IDENTITY(1,1) PRIMARY KEY,
+    Baslik NVARCHAR(150) NOT NULL,
+    Tutar DECIMAL(18,2) NOT NULL,
+    IslemTuru NVARCHAR(20) NOT NULL, -- 'Gelir' veya 'Gider'
+    Tarih DATETIME NOT NULL DEFAULT GETDATE(),
+    KategoriId INT FOREIGN KEY REFERENCES Kategoriler(KategoriId),
+    KasaId INT FOREIGN KEY REFERENCES Kasalar(KasaId),
+    Aciklama NVARCHAR(250) NULL
+);
+
+-- 5. Kasa Hareketleri (Transfer ve Hesap Hareketleri)
+CREATE TABLE KasaHareketleri (
+    HareketId INT IDENTITY(1,1) PRIMARY KEY,
+    KasaId INT FOREIGN KEY REFERENCES Kasalar(KasaId),
+    HareketTuru NVARCHAR(50) NOT NULL, -- 'Gelen Havale', 'Giden EFT', 'Nakit Giriş' vb.
+    Tutar DECIMAL(18,2) NOT NULL,
+    Tarih DATETIME NOT NULL DEFAULT GETDATE(),
+    Aciklama NVARCHAR(250) NULL
+);
+
+-- 6. Bütçe Limitleri Tablosu
+CREATE TABLE ButceLimitleri (
+    LimitId INT IDENTITY(1,1) PRIMARY KEY,
+    KategoriId INT FOREIGN KEY REFERENCES Kategoriler(KategoriId),
+    AylikLimit DECIMAL(18,2) NOT NULL,
+    Donem NVARCHAR(20) NOT NULL -- Örn: '2026-11'
+);
+GO
+
+-- ÖRNEK BAŞLANGIÇ VERİLERİ
+INSERT INTO Kullanicilar (AdSoyad, KullaniciAdi, Sifre) 
+VALUES (N'Emirhan Sartık', 'admin', '1234');
+
+INSERT INTO Kategoriler (KategoriAd) VALUES 
+(N'Market & Gıda'),
+(N'Faturalar & Abonelik'),
+(N'Ulaşım & Yakıt'),
+(N'Burs / Maaş Geliri'),
+(N'Eğitim & Kitap');
+
+INSERT INTO Kasalar (KasaAd, KasaTuru, Bakiye) VALUES 
+(N'Nakit Cüzdan', N'Nakit', 1450.00),
+(N'Ziraat Bankası', N'Banka', 8250.50),
+(N'Enpara Hesabım', N'Banka', 4300.00);
+
+INSERT INTO GelirGiderler (Baslik, Tutar, IslemTuru, Tarih, KategoriId, KasaId, Aciklama) VALUES 
+(N'KYK Burs Ödemesi', 3000.00, N'Gelir', GETDATE(), 4, 2, N'Aylık burs yatışı'),
+(N'Haftalık Market Alışverişi', 850.00, N'Gider', GETDATE(), 1, 1, N'Mutfak eksikleri'),
+(N'İnternet ve Telefon Faturası', 420.00, N'Gider', GETDATE(), 2, 3, N'Otomatik ödeme');
+
+INSERT INTO KasaHareketleri (KasaId, HareketTuru, Tutar, Tarih, Aciklama) VALUES 
+(2, N'Gelen Havale', 3000.00, GETDATE(), N'KYK Burs Ödemesi'),
+(3, N'Giden EFT', 420.00, GETDATE(), N'Fatura ödemesi');
+
+INSERT INTO ButceLimitleri (KategoriId, AylikLimit, Donem) VALUES 
+(1, 4000.00, '2026-11'),
+(3, 1500.00, '2026-11');
+GO
